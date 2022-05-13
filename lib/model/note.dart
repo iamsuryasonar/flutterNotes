@@ -4,7 +4,9 @@ class Note {
   String key;
   int timestamp;
   String noteColor;
-  Note(this.key, this.title, this.note, this.timestamp, this.noteColor);
+  List<dynamic>? images;
+  Note(this.key, this.title, this.note, this.timestamp, this.noteColor,
+      {this.images});
 
   Map<dynamic, dynamic> toJson() => <dynamic, dynamic>{
         'title': title,
@@ -19,5 +21,6 @@ class Note {
         note = json['note'] as String,
         key = json['key'] as String,
         timestamp = json['timestamp'] as int,
-        noteColor = json['noteColor'] as String;
+        noteColor = json['noteColor'] as String,
+        images = json['images'] as List<dynamic>;
 }

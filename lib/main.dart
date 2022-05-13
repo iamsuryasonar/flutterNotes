@@ -27,11 +27,12 @@ class MyApp extends StatelessWidget {
     bool isLoggedIn =
         FirebaseAuth.instance.currentUser?.uid == null ? false : true;
     return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(primaryColor: Colors.yellow[700]),
-        onGenerateRoute: generateRoute,
-        // home route is Notes if user is logged in else Register
-        home: isLoggedIn ? const Notes() : const Register());
+      debugShowCheckedModeBanner: false,
+      // theme: ThemeData(primaryColor: Colors.yellow[700]),
+      onGenerateRoute: generateRoute,
+      // home route is Notes if user is logged in else Register
+      home: isLoggedIn ? const Notes() : const Register(),
+    );
   }
 }
 

@@ -68,7 +68,12 @@ android {
    }
    buildTypes {
        release {
-           signingConfig signingConfigs.release
+            signingConfig signingConfigs.release
+
+            minifyEnabled true
+            shrinkResources true
+            useProguard true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
        }
    }
 
@@ -79,7 +84,6 @@ flutter {
 }
 
 dependencies {
-    implementation platform('com.google.firebase:firebase-bom:29.3.1')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'com.google.android.material:material:1.6.0-rc01'
 }

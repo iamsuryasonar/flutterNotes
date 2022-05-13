@@ -1,7 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/services.dart';
 import 'package:flutterapp/handler/crud_handler.dart';
 import 'package:flutterapp/model/note.dart';
+import 'package:flutterapp/screens/image_screen.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:permission_handler/permission_handler.dart';
 
 class AddNotes extends StatefulWidget {
   final String? title;
@@ -9,13 +16,15 @@ class AddNotes extends StatefulWidget {
   final String? index;
   final int? timestamp;
   final String? noteColor;
+  final List<dynamic>? listOfImages;
   const AddNotes(
       {Key? key,
       this.title,
       this.note,
       this.index,
       this.timestamp,
-      this.noteColor})
+      this.noteColor,
+      this.listOfImages})
       : super(key: key);
 
   @override
@@ -28,6 +37,9 @@ class _AddNotesState extends State<AddNotes> {
   String key = '';
   int timestamp = 0;
   String noteColor = 'ff97F2F3';
+  List<dynamic>? listOfImages = [];
+  var file;
+  bool _loading = false;
 
   final CrudHandler crudInstance = CrudHandler();
   FirebaseDatabase database = FirebaseDatabase.instance;
@@ -58,6 +70,11 @@ class _AddNotesState extends State<AddNotes> {
       noteColor = 'ff97F2F3';
     } else {
       noteColor = widget.noteColor.toString();
+    }
+    if (widget.listOfImages == null) {
+      listOfImages = [];
+    } else {
+      listOfImages = widget.listOfImages;
     }
     ValueNotifier<String> changedColor = ValueNotifier(noteColor);
 
@@ -92,6 +109,8 @@ class _AddNotesState extends State<AddNotes> {
       bottomSheet: Row(
         children: <Widget>[
           IconButton(
+            highlightColor: Colors.green,
+            splashColor: Colors.green,
             onPressed: () {
               showModalBottomSheet(
                   context: context,
@@ -149,18 +168,88 @@ class _AddNotesState extends State<AddNotes> {
             // color: Color(int.parse(changedColor.value, radix: 16)),
           ),
           IconButton(
-              onPressed: () {},
+              highlightColor: Colors.green,
+              splashColor: Colors.green,
+              onPressed: () async {
+                final _imagePicker = ImagePicker();
+                XFile? image;
+                //Check Permissions
+                await Permission.photos.request();
+
+                var permissionStatus = await Permission.photos.status;
+
+                if (permissionStatus.isGranted) {
+                  //Select Image
+                  image =
+                      await _imagePicker.pickImage(source: ImageSource.gallery);
+
+                  file = await File(image!.path).create();
+                }
+              },
               icon: const Icon(Icons.add_photo_alternate_rounded)),
+          IconButton(
+              highlightColor: Colors.green,
+              splashColor: Colors.green,
+              onPressed: () async {
+                var data = await rootBundle.load("fonts/Jost.ttf");
+                var myFont = pw.Font.ttf(data);
+                final pdf = pw.Document();
+
+                pdf.addPage(
+                  pw.Page(
+                    pageFormat: PdfPageFormat.a4,
+                    build: (pw.Context context) {
+                      return pw.Center(
+                        child: pw.Column(
+                          children: [
+                            pw.Text(
+                              title,
+                              style: pw.TextStyle(font: myFont, fontSize: 18),
+                            ),
+                            pw.SizedBox(height: 10),
+                            pw.Wrap(children: [
+                              pw.Text(
+                                note,
+                                style: pw.TextStyle(font: myFont, fontSize: 14),
+                              ),
+                            ]),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                );
+
+                String documentsPath = '/storage/emulated/0/Documents';
+                var filepath = '$documentsPath/$title.pdf';
+                final file = File(filepath);
+                await file.writeAsBytes(await pdf.save());
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    duration: Duration(
+                      seconds: 1,
+                    ),
+                    content: Text('Pdf saved'),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.download_for_offline_sharp)),
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
       floatingActionButton: Padding(
         padding: const EdgeInsets.all(25.0),
         child: FloatingActionButton.extended(
-          onPressed: () {
+          onPressed: () async {
             try {
+              setState(() {
+                _loading = true;
+              });
               final newnote = Note(key, title, note, timestamp, noteColor);
-              crudInstance.addNote(newnote);
+              await crudInstance.addNote(newnote, file: file);
+              setState(() {
+                _loading = false;
+              });
               Navigator.pop(context);
             } catch (e) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -170,18 +259,31 @@ class _AddNotesState extends State<AddNotes> {
               );
             }
           },
-          label: const Text(
-            'Save',
-            style: TextStyle(
-              fontSize: 20.0,
-              fontFamily: 'Jost',
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          icon: const Icon(
-            Icons.add,
-            size: 25.0,
-          ),
+          label: (_loading == true)
+              ? const Text(
+                  'Saving',
+                  style: TextStyle(
+                    fontSize: 20.0,
+                    fontFamily: 'Jost',
+                    fontWeight: FontWeight.w800,
+                  ),
+                )
+              : const Text(
+                  'Save',
+                  style: TextStyle(
+                    fontSize: 20.0,
+                    fontFamily: 'Jost',
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+          icon: (_loading == true)
+              ? const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                )
+              : const Icon(
+                  Icons.add,
+                  size: 25.0,
+                ),
           backgroundColor: const Color.fromRGBO(103, 244, 148, 1),
         ),
       ),
@@ -190,6 +292,73 @@ class _AddNotesState extends State<AddNotes> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
+            (listOfImages != null && listOfImages!.isNotEmpty)
+                // ? Container(
+                //     child: PhotoViewGallery.builder(
+                //       scrollPhysics: const BouncingScrollPhysics(),
+                //       builder: (BuildContext context, int index) {
+                //         return PhotoViewGalleryPageOptions(
+                //           imageProvider:
+                //               AssetImage(widget.listOfImages?[index]),
+                //           initialScale: PhotoViewComputedScale.contained * 0.8,
+                //           heroAttributes: PhotoViewHeroAttributes(
+                //               tag: listOfImages?[index]),
+                //         );
+                //       },
+                //       itemCount: listOfImages?.length,
+                //       loadingBuilder: (context, event) => Center(
+                //         child: Container(
+                //           width: 20.0,
+                //           height: 20.0,
+                //           child: const CircularProgressIndicator(
+                //               // value: event == null
+                //               //     ? 0
+                //               //     : event.cumulativeBytesLoaded / event.expectedTotalBytes,
+                //               ),
+                //         ),
+                //       ),
+                //       // backgroundDecoration: widget.backgroundDecoration,
+                //       // pageController: widget.pageController,
+                //       // onPageChanged: onPageChanged,
+                //     ),
+                //   )
+
+                ? SizedBox(
+                    width: double.infinity,
+                    height: 70,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: listOfImages?.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return GestureDetector(
+                          onTap: () {
+                            print(listOfImages?[index]);
+                            //navigate to display full image
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ImageScreen(
+                                  image: listOfImages?[index],
+                                ),
+                              ),
+                            );
+                          },
+                          onLongPress: () {},
+                          child: CircleAvatar(
+                            radius: 50,
+                            backgroundColor: Colors.grey[200],
+                            backgroundImage: NetworkImage(
+                              (listOfImages?[index]),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                : const SizedBox(
+                    width: double.infinity,
+                    height: 0,
+                  ),
             TextField(
               style: const TextStyle(
                 fontSize: 25.0,
@@ -216,10 +385,10 @@ class _AddNotesState extends State<AddNotes> {
             Expanded(
               child: TextField(
                 style: const TextStyle(
-                  fontSize: 20.0,
-                  fontFamily: 'Jost',
-                  fontWeight: FontWeight.w800,
-                ),
+                    fontSize: 18.0,
+                    fontFamily: 'Jost',
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87),
                 cursorColor: Colors.grey[900],
                 controller: TextEditingController(text: note),
                 keyboardType: TextInputType.multiline,
@@ -242,7 +411,7 @@ class _AddNotesState extends State<AddNotes> {
                 },
               ),
             ),
-            const SizedBox(height: 20.0),
+            const SizedBox(height: 30.0),
           ],
         ),
       ),

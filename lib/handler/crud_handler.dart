@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutterapp/model/note.dart';
 import 'package:flutterapp/handler/auth_handler.dart';
 
@@ -10,12 +11,13 @@ class CrudHandler {
       FirebaseDatabase.instance.ref().child('/users');
 
   late DatabaseReference _notesRef;
+  final _firebaseStorage = FirebaseStorage.instance;
 
   CrudHandler() {
     _notesRef =
         _usersRef.child(authInstance.getCurrentUserid()).child("/notes");
   }
-  void addNote(Note note) async {
+  Future addNote(Note note, {var file}) async {
     //key for new child of notes route in firebase database
     String notekey;
     // check if note already contains the key
@@ -36,7 +38,26 @@ class CrudHandler {
     note.timestamp = DateTime.now().millisecondsSinceEpoch;
 
     //set a note to firebase database - child notes
-    await _notesRef.child(notekey).set(note.toJson());
+    await _notesRef.child(notekey).update({
+      'key': note.key,
+      'timestamp': note.timestamp,
+      'note': note.note,
+      'noteColor': note.noteColor,
+      'title': note.title,
+    });
+
+    // upload image
+
+    if (file != null) {
+      var snapshot = await _firebaseStorage
+          .ref()
+          .child('notesimages/${note.key}/${note.timestamp}')
+          .putFile(file);
+
+      var downloadUrl = await snapshot.ref.getDownloadURL();
+
+      await _notesRef.child(notekey).child('images').push().set(downloadUrl);
+    }
   }
 
   Future<List<Note>> getNotes() async {
@@ -44,8 +65,27 @@ class CrudHandler {
     final snapshot = await _notesRef.get();
     if (snapshot.value != null) {
       final json = snapshot.value as Map<dynamic, dynamic>;
+      //iterate over Map to convert each into Note instance
       json.forEach((key, value) {
-        final result = Note.fromJson(value);
+        Map<dynamic, dynamic> map = {};
+        List<dynamic> listOfImages = [];
+        if (value['images'] != null) {
+          // convert images Map to list
+          value['images'].forEach((k, v) {
+            listOfImages.add(v);
+          });
+        }
+        //modify the map to replace images Map to a List
+        map = {
+          'key': value['key'],
+          'note': value['note'],
+          'title': value['title'],
+          'timestamp': value['timestamp'],
+          'noteColor': value['noteColor'],
+          'images': listOfImages,
+        };
+        //convert to a Note instance
+        final result = Note.fromJson(map);
         items.add(result);
       });
     }
@@ -54,5 +94,14 @@ class CrudHandler {
 
   deleteNote(String key) async {
     await _notesRef.child(key).remove();
+  }
+
+  deleteImage(String noteKey, String imageKey) async {
+    await _notesRef.child(noteKey).child('images').child(imageKey).remove();
+
+    // await _firebaseStorage
+    //     .ref()
+    //     .child('notesimages/${noteKey}/${note.timestamp}').delete();
+    // final desertRef = storageRef.child("images/desert.jpg");
   }
 }

@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:flutterapp/model/note.dart';
@@ -21,12 +20,17 @@ class _NotesState extends State<Notes> {
   List<Note> allitems = [];
   dynamic db;
   late CrudHandler crudInstance;
+  bool _loading = false;
 
   getNotes() {
+    setState(() {
+      _loading = true;
+    });
     crudInstance = CrudHandler();
     db = crudInstance.getNotes();
     setState(() {
       db = crudInstance.getNotes();
+      _loading = false;
     });
   }
 
@@ -179,122 +183,133 @@ class _NotesState extends State<Notes> {
         },
         color: Colors.white,
         backgroundColor: Colors.grey[900],
-        child: Center(
-          child: Container(
-            margin: const EdgeInsets.all(5.0),
-            child: FutureBuilder<List<Note>>(
-              future: db,
-              builder: (BuildContext context, AsyncSnapshot snapshot) {
-                if (snapshot.hasError) {
-                  Text('Error: ${snapshot.error}');
-                } else if (snapshot.hasData) {
-                  allitems = snapshot.data;
-                  if (allitems.isEmpty) {
-                    return const Text(
-                      "No notes to display",
-                      style: TextStyle(
-                        fontFamily: 'Jost',
-                        fontWeight: FontWeight.w800,
-                      ),
-                    );
-                  }
-                  // sort notes depending on the timestamp of creation
-                  allitems.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        child: (_loading == true)
+            ? const LinearProgressIndicator(
+                value: 0.7,
+              )
+            : Center(
+                child: Container(
+                  margin: const EdgeInsets.all(5.0),
+                  child: FutureBuilder<List<Note>>(
+                    future: db,
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      if (snapshot.hasError) {
+                        Text('Error: ${snapshot.error}');
+                      } else if (snapshot.hasData) {
+                        allitems = snapshot.data;
+                        if (allitems.isEmpty) {
+                          return const Text(
+                            "No notes to display",
+                            style: TextStyle(
+                              fontFamily: 'Jost',
+                              fontWeight: FontWeight.w800,
+                            ),
+                          );
+                        }
+                        // sort notes depending on the timestamp of creation
+                        allitems
+                            .sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
-                  return MasonryGridView.count(
-                      itemCount: allitems.length,
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 2,
-                      crossAxisSpacing: 2,
-                      itemBuilder: (context, index) {
-                        return Card(
-                          // color: const Color.fromRGBO(247, 247, 247, 1),
-                          color: Color(
-                              int.parse(allitems[index].noteColor, radix: 16)),
-                          child: Dismissible(
-                            key: Key(allitems[index].key),
-                            onDismissed: (direction) {
-                              crudInstance.deleteNote(allitems[index].key);
-                              if (allitems.isEmpty) {
-                                return;
-                              }
-                              setState(() {
-                                allitems.remove(allitems[index]);
-                              });
+                        return MasonryGridView.count(
+                            itemCount: allitems.length,
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 2,
+                            crossAxisSpacing: 2,
+                            itemBuilder: (context, index) {
+                              return Card(
+                                // color: const Color.fromRGBO(247, 247, 247, 1),
+                                color: Color(int.parse(
+                                    allitems[index].noteColor,
+                                    radix: 16)),
+                                child: Dismissible(
+                                  key: Key(allitems[index].key),
+                                  onDismissed: (direction) {
+                                    crudInstance
+                                        .deleteNote(allitems[index].key);
+                                    if (allitems.isEmpty) {
+                                      return;
+                                    }
+                                    setState(() {
+                                      allitems.remove(allitems[index]);
+                                    });
 
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'note deleted',
-                                    style: TextStyle(
-                                      fontFamily: 'Jost',
-                                      fontWeight: FontWeight.w800,
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'note deleted',
+                                          style: TextStyle(
+                                            fontFamily: 'Jost',
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  background: Container(
+                                    color: Colors.red,
+                                    child: const Align(
+                                      child: Icon(
+                                        Icons.delete,
+                                        color: Colors.white,
+                                      ),
                                     ),
+                                  ),
+                                  child: ListTile(
+                                    title: Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 6.0, bottom: 6.0),
+                                      child: Text(
+                                        allitems[index].title,
+                                        style: const TextStyle(
+                                          fontSize: 18.0,
+                                          fontFamily: 'Jost',
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ),
+                                    subtitle: Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 6.0),
+                                      child: Text(
+                                        allitems[index].note,
+                                        maxLines: 10,
+                                        style: const TextStyle(
+                                          fontSize: 16.0,
+                                          fontFamily: 'Jost',
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                    ),
+                                    onTap: () {
+                                      //edit note
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => AddNotes(
+                                            title: allitems[index].title,
+                                            note: allitems[index].note,
+                                            index: allitems[index].key,
+                                            timestamp: 0,
+                                            noteColor:
+                                                allitems[index].noteColor,
+                                            listOfImages:
+                                                allitems[index].images,
+                                          ),
+                                        ),
+                                      ).then((data) {
+                                        getNotes();
+                                      });
+                                    },
                                   ),
                                 ),
                               );
-                            },
-                            background: Container(
-                              color: Colors.red,
-                              child: const Align(
-                                child: Icon(
-                                  Icons.delete,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                            child: ListTile(
-                              title: Padding(
-                                padding: const EdgeInsets.only(
-                                    top: 6.0, bottom: 6.0),
-                                child: Text(
-                                  allitems[index].title,
-                                  style: const TextStyle(
-                                    fontSize: 18.0,
-                                    fontFamily: 'Jost',
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(bottom: 6.0),
-                                child: Text(
-                                  allitems[index].note,
-                                  maxLines: 10,
-                                  style: const TextStyle(
-                                    fontSize: 16.0,
-                                    fontFamily: 'Jost',
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                              ),
-                              onTap: () {
-                                //edit note
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => AddNotes(
-                                      title: allitems[index].title,
-                                      note: allitems[index].note,
-                                      index: allitems[index].key,
-                                      timestamp: 0,
-                                      noteColor: allitems[index].noteColor,
-                                    ),
-                                  ),
-                                ).then((data) {
-                                  getNotes();
-                                });
-                              },
-                            ),
-                          ),
-                        );
-                      });
-                }
-                return const CircularProgressIndicator();
-              },
-            ),
-          ),
-        ),
+                            });
+                      }
+                      return const CircularProgressIndicator();
+                    },
+                  ),
+                ),
+              ),
       ),
     );
   }
