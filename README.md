@@ -1,6 +1,6 @@
 # jotdot
 
-A new Flutter project.
+Note taking app built with flutter
 
 ## Getting Started
 
