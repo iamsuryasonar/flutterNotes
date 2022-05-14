@@ -2,9 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/services.dart';
-import 'package:flutterapp/handler/crud_handler.dart';
-import 'package:flutterapp/model/note.dart';
-import 'package:flutterapp/screens/image_screen.dart';
+import 'package:jotdot/handler/crud_handler.dart';
+import 'package:jotdot/model/note.dart';
+import 'package:jotdot/screens/image_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -16,7 +16,8 @@ class AddNotes extends StatefulWidget {
   final String? index;
   final int? timestamp;
   final String? noteColor;
-  final List<dynamic>? listOfImages;
+  // final List<dynamic>? listOfImages;
+  final Map<dynamic, dynamic>? listOfImages;
   const AddNotes(
       {Key? key,
       this.title,
@@ -37,7 +38,8 @@ class _AddNotesState extends State<AddNotes> {
   String key = '';
   int timestamp = 0;
   String noteColor = 'ff97F2F3';
-  List<dynamic>? listOfImages = [];
+  // List<dynamic>? listOfImages = [];
+  Map<dynamic, dynamic>? listOfImages = {};
   var file;
   bool _loading = false;
 
@@ -72,7 +74,8 @@ class _AddNotesState extends State<AddNotes> {
       noteColor = widget.noteColor.toString();
     }
     if (widget.listOfImages == null) {
-      listOfImages = [];
+      // listOfImages = [];
+      listOfImages = {};
     } else {
       listOfImages = widget.listOfImages;
     }
@@ -229,7 +232,7 @@ class _AddNotesState extends State<AddNotes> {
                     duration: Duration(
                       seconds: 1,
                     ),
-                    content: Text('Pdf saved'),
+                    content: Text('Pdf saved at documents folder'),
                   ),
                 );
               },
@@ -293,36 +296,6 @@ class _AddNotesState extends State<AddNotes> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             (listOfImages != null && listOfImages!.isNotEmpty)
-                // ? Container(
-                //     child: PhotoViewGallery.builder(
-                //       scrollPhysics: const BouncingScrollPhysics(),
-                //       builder: (BuildContext context, int index) {
-                //         return PhotoViewGalleryPageOptions(
-                //           imageProvider:
-                //               AssetImage(widget.listOfImages?[index]),
-                //           initialScale: PhotoViewComputedScale.contained * 0.8,
-                //           heroAttributes: PhotoViewHeroAttributes(
-                //               tag: listOfImages?[index]),
-                //         );
-                //       },
-                //       itemCount: listOfImages?.length,
-                //       loadingBuilder: (context, event) => Center(
-                //         child: Container(
-                //           width: 20.0,
-                //           height: 20.0,
-                //           child: const CircularProgressIndicator(
-                //               // value: event == null
-                //               //     ? 0
-                //               //     : event.cumulativeBytesLoaded / event.expectedTotalBytes,
-                //               ),
-                //         ),
-                //       ),
-                //       // backgroundDecoration: widget.backgroundDecoration,
-                //       // pageController: widget.pageController,
-                //       // onPageChanged: onPageChanged,
-                //     ),
-                //   )
-
                 ? SizedBox(
                     width: double.infinity,
                     height: 70,
@@ -330,25 +303,46 @@ class _AddNotesState extends State<AddNotes> {
                       scrollDirection: Axis.horizontal,
                       itemCount: listOfImages?.length,
                       itemBuilder: (BuildContext context, int index) {
+                        var entryList = listOfImages?.entries.toList();
+
                         return GestureDetector(
                           onTap: () {
-                            print(listOfImages?[index]);
-                            //navigate to display full image
+                            // navigate to display full image
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => ImageScreen(
-                                  image: listOfImages?[index],
+                                  image: entryList?[index].value,
                                 ),
                               ),
                             );
                           },
-                          onLongPress: () {},
+                          onLongPress: () async {
+                            setState(() {
+                              listOfImages?.remove(entryList?[index].key);
+                            });
+                            await crudInstance
+                                .deleteImage(key, entryList?[index].key,
+                                    entryList?[index].value)
+                                .then((value) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Image deleted'),
+                                ),
+                              );
+                            }).onError((error, stackTrace) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('$error'),
+                                ),
+                              );
+                            });
+                          },
                           child: CircleAvatar(
                             radius: 50,
                             backgroundColor: Colors.grey[200],
                             backgroundImage: NetworkImage(
-                              (listOfImages?[index]),
+                              (entryList?[index].value),
                             ),
                           ),
                         );

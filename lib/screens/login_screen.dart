@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/handler/auth_handler.dart';
-import 'package:flutterapp/screens/forgot_password_screen.dart';
-import 'package:flutterapp/screens/notes_screen.dart';
-import 'package:flutterapp/screens/register_screen.dart';
+import 'package:jotdot/handler/auth_handler.dart';
+import 'package:jotdot/screens/forgot_password_screen.dart';
+import 'package:jotdot/screens/notes_screen.dart';
+import 'package:jotdot/screens/register_screen.dart';
 
 class LogIn extends StatefulWidget {
   const LogIn({Key? key}) : super(key: key);
@@ -12,6 +12,8 @@ class LogIn extends StatefulWidget {
 
 class _LogInState extends State<LogIn> {
   bool _isLoading = false;
+  bool _isPasswordVisible = false;
+
   AuthHandler authInstance = AuthHandler();
   String email = "";
   String password = "";
@@ -77,7 +79,7 @@ class _LogInState extends State<LogIn> {
                 ),
                 TextField(
                   cursorColor: Colors.grey[900],
-                  obscureText: true,
+                  obscureText: !_isPasswordVisible,
                   decoration: InputDecoration(
                     focusedBorder: const OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.black26),
@@ -93,9 +95,18 @@ class _LogInState extends State<LogIn> {
                     border: const OutlineInputBorder(),
                     labelText: 'Password',
                     hintText: 'Password',
-                    suffixIcon: Icon(
-                      Icons.password_outlined,
-                      color: Colors.grey[900],
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                      icon: Icon(
+                        Icons.password_outlined,
+                        color: !_isPasswordVisible
+                            ? Colors.grey[900]
+                            : Colors.green,
+                      ),
                     ),
                     hintStyle: TextStyle(
                       color: Colors.grey[900],
@@ -154,7 +165,10 @@ class _LogInState extends State<LogIn> {
                             ? const SizedBox(
                                 width: 25,
                                 height: 25,
-                                child: CircularProgressIndicator())
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                ))
                             : const Text(
                                 'Log in',
                                 style: TextStyle(

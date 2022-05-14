@@ -1,4 +1,4 @@
-package com.example.flutterapp
+package com.bevyinsight.jotdot
 
 import io.flutter.embedding.android.FlutterActivity
 

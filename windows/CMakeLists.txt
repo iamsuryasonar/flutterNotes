@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
-project(flutterapp LANGUAGES CXX)
+project(jotdot LANGUAGES CXX)
 
-set(BINARY_NAME "flutterapp")
+set(BINARY_NAME "jotdot")
 
 cmake_policy(SET CMP0063 NEW)
 

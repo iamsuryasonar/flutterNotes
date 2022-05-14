@@ -1,4 +1,4 @@
-# flutterapp
+# jotdot
 
 A new Flutter project.
 

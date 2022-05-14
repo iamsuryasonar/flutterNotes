@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutterapp/model/note.dart';
-import 'package:flutterapp/handler/auth_handler.dart';
+import 'package:jotdot/model/note.dart';
+import 'package:jotdot/handler/auth_handler.dart';
 
 class CrudHandler {
   AuthHandler authInstance = AuthHandler();
@@ -68,11 +68,14 @@ class CrudHandler {
       //iterate over Map to convert each into Note instance
       json.forEach((key, value) {
         Map<dynamic, dynamic> map = {};
-        List<dynamic> listOfImages = [];
+        // List<dynamic> listOfImages = [];
+        Map<dynamic, dynamic> listOfImages = {};
         if (value['images'] != null) {
           // convert images Map to list
           value['images'].forEach((k, v) {
-            listOfImages.add(v);
+            // listOfImages.add(v);
+            final newEntry = <String, String>{k: v};
+            listOfImages.addEntries(newEntry.entries);
           });
         }
         //modify the map to replace images Map to a List
@@ -93,15 +96,19 @@ class CrudHandler {
   }
 
   deleteNote(String key) async {
+    await FirebaseStorage.instance
+        .ref("notesimages/$key/")
+        .listAll()
+        .then((value) {
+      for (var element in value.items) {
+        FirebaseStorage.instance.ref(element.fullPath).delete();
+      }
+    });
     await _notesRef.child(key).remove();
   }
 
-  deleteImage(String noteKey, String imageKey) async {
+  Future deleteImage(String noteKey, String imageKey, String imageurl) async {
     await _notesRef.child(noteKey).child('images').child(imageKey).remove();
-
-    // await _firebaseStorage
-    //     .ref()
-    //     .child('notesimages/${noteKey}/${note.timestamp}').delete();
-    // final desertRef = storageRef.child("images/desert.jpg");
+    await FirebaseStorage.instance.refFromURL(imageurl).delete();
   }
 }

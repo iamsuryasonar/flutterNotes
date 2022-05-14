@@ -2,15 +2,15 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutterapp/model/note.dart';
-import 'package:flutterapp/screens/about_screen.dart';
-import 'package:flutterapp/screens/add_view_notes_screen.dart';
-import 'package:flutterapp/screens/forgot_password_screen.dart';
-import 'package:flutterapp/screens/login_screen.dart';
-import 'package:flutterapp/screens/notes_screen.dart';
-import 'package:flutterapp/screens/register_screen.dart';
-import 'package:flutterapp/screens/settings_screen.dart';
-import 'package:flutterapp/screens/splash_screen.dart';
+import 'package:jotdot/model/note.dart';
+import 'package:jotdot/screens/about_screen.dart';
+import 'package:jotdot/screens/add_view_notes_screen.dart';
+import 'package:jotdot/screens/forgot_password_screen.dart';
+import 'package:jotdot/screens/login_screen.dart';
+import 'package:jotdot/screens/notes_screen.dart';
+import 'package:jotdot/screens/register_screen.dart';
+import 'package:jotdot/screens/settings_screen.dart';
+import 'package:jotdot/screens/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

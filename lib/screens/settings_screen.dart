@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/handler/auth_handler.dart';
-import 'package:flutterapp/screens/login_screen.dart';
+import 'package:jotdot/handler/auth_handler.dart';
+import 'package:jotdot/screens/login_screen.dart';
 
 class Settings extends StatelessWidget {
   const Settings({Key? key}) : super(key: key);

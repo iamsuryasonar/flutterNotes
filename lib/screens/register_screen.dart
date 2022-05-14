@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/handler/auth_handler.dart';
-import 'package:flutterapp/screens/login_screen.dart';
-import 'package:flutterapp/screens/notes_screen.dart';
+import 'package:jotdot/handler/auth_handler.dart';
+import 'package:jotdot/screens/login_screen.dart';
+import 'package:jotdot/screens/notes_screen.dart';
 
 class Register extends StatefulWidget {
   const Register({Key? key}) : super(key: key);
@@ -13,6 +13,7 @@ class Register extends StatefulWidget {
 class _RegisterState extends State<Register> {
   AuthHandler authInstance = AuthHandler();
   bool _isLoading = false;
+  bool _isPasswordVisible = false;
   String username = '';
   String email = "";
   String password = "";
@@ -112,7 +113,7 @@ class _RegisterState extends State<Register> {
                 ),
                 TextField(
                   cursorColor: Colors.grey[900],
-                  obscureText: true,
+                  obscureText: !_isPasswordVisible,
                   decoration: InputDecoration(
                     focusedBorder: const OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.black26),
@@ -128,9 +129,18 @@ class _RegisterState extends State<Register> {
                     border: const OutlineInputBorder(),
                     labelText: 'Password',
                     hintText: 'Password',
-                    suffixIcon: Icon(
-                      Icons.password,
-                      color: Colors.grey[900],
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                      icon: Icon(
+                        Icons.password_outlined,
+                        color: !_isPasswordVisible
+                            ? Colors.grey[900]
+                            : Colors.green,
+                      ),
                     ),
                     hintStyle: TextStyle(
                       color: Colors.grey[900],
@@ -190,7 +200,10 @@ class _RegisterState extends State<Register> {
                           ? const SizedBox(
                               width: 25,
                               height: 25,
-                              child: CircularProgressIndicator())
+                              child: CircularProgressIndicator(
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                              ))
                           : const Text(
                               'Register',
                               style: TextStyle(
@@ -209,7 +222,7 @@ class _RegisterState extends State<Register> {
                         ),
                       ),
                       onPressed: () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
                             builder: (context) => const LogIn(),
@@ -217,7 +230,7 @@ class _RegisterState extends State<Register> {
                         );
                       },
                       child: const Text(
-                        'Terms and Conditions',
+                        'Privacy policy',
                         style: TextStyle(
                           fontFamily: 'Jost',
                           fontWeight: FontWeight.w800,

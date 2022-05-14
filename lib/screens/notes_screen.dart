@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:flutterapp/model/note.dart';
-import 'package:flutterapp/handler/auth_handler.dart';
-import 'package:flutterapp/handler/crud_handler.dart';
-import 'package:flutterapp/screens/about_screen.dart';
-import 'package:flutterapp/screens/add_view_notes_screen.dart';
-import 'package:flutterapp/screens/login_screen.dart';
-import 'package:flutterapp/screens/settings_screen.dart';
+import 'package:jotdot/model/note.dart';
+import 'package:jotdot/handler/auth_handler.dart';
+import 'package:jotdot/handler/crud_handler.dart';
+import 'package:jotdot/screens/about_screen.dart';
+import 'package:jotdot/screens/add_view_notes_screen.dart';
+import 'package:jotdot/screens/login_screen.dart';
+import 'package:jotdot/screens/settings_screen.dart';
 
 class Notes extends StatefulWidget {
   const Notes({Key? key}) : super(key: key);
